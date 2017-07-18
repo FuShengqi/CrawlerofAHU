@@ -10,18 +10,22 @@ public class News {
     private String title;
 
     public Date getDate(){
+
         return date;
     }
 
     public void setDate(Date date){
+
         this.date=date;
     }
 
     public String getTitle(){
+
         return title;
     }
 
     public void setTitle(String title){
+
         this.title=title;
     }
 

@@ -4,6 +4,7 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -82,60 +83,67 @@ public class BasicCrawler extends WebCrawler {
             }*/
 
             News news=new News();
-            File file=new File("E:/news.txt");
+            File file=new File("E:\\news.txt");
             try {
-                FileOutputStream fos=new FileOutputStream(file);
+                FileOutputStream fos=new FileOutputStream(file,true);
+                Pattern p2=Pattern.compile("http://jwc\\.ahu\\.cn/main/index\\.asp$");
+                Pattern p3=Pattern.compile("http://jwc\\.ahu\\.cn/main/notice\\.asp([?page=\\d+]*)");
+
+                if(p2.matcher(url).matches()) {
+                    Elements elements = doc.select("body > table > tbody > tr:nth-child(2) > td:nth-child(2) > table > tbody > tr:nth-child(6) > td:nth-child(1) > table:nth-child(1) > tbody > tr:nth-child(1) > td:nth-child(3) > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(2) > td > table > tbody > tr");
+                    for (Element element : elements) {
+                        Elements tds = element.select("td");
+                        for (Element td : tds) {
+                            String title=td.attr("title");
+                            System.out.println(title+"-----"+url);
+
+                            String date=td.select("font").text();
+                            System.out.println(date);
+
+                            date="Date:"+date+"\r\n";
+                            title="Title:"+title+"\r\n\r\n";
+                            String record=date+title;
+                            fos.write(record.getBytes());
+                            //fos.close();
+                            //data=td.select("font").text().getBytes();
+
+                            date="";
+                            title="";
+                        }
+                    }
+                }else if(p3.matcher(url).matches()){
+                    Elements elementsInNextPage=doc.select("body > table > tbody > tr:nth-child(2) > td:nth-child(2) > table:nth-child(1) > tbody > tr:nth-child(5) > td > table > tbody > tr > td:nth-child(3) > table > tbody > tr");
+                    for(Element element:elementsInNextPage){
+                        Elements as=element.select("td > a");
+                        Elements times=element.select("td.timecss");
+
+                        String title="";
+                        String newsUrl="";
+                        for(Element a:as){
+                            title=a.text();
+                            newsUrl=a.attr("href");
+                            System.out.println(a.text()+"-----"+url);
+                        }
+
+                        String date="";
+                        for(Element time:times){
+                            date=time.text();
+                            System.out.println(time.text());
+                        }
+
+                        if(date==""||title=="")
+                            continue;
+                        date="Date:"+date+"\r\n";
+                        title="Title:"+title+"\r\n";
+                        newsUrl="URL:http://jwc.ahu.cn/main/"+newsUrl+"\r\n\r\n";
+                        String record=date+title+newsUrl;
+                        fos.write(record.getBytes());
+                    }
+                }
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
-            }
-            byte[] data;
-
-            Pattern p2=Pattern.compile("http://jwc\\.ahu\\.cn/main/index\\.asp$");
-            Pattern p3=Pattern.compile("http://jwc\\.ahu\\.cn/main/notice\\.asp([?page=\\d+]*)");
-
-            if(p2.matcher(url).matches()) {
-                Elements elements = doc.select("body > table > tbody > tr:nth-child(2) > td:nth-child(2) > table > tbody > tr:nth-child(6) > td:nth-child(1) > table:nth-child(1) > tbody > tr:nth-child(1) > td:nth-child(3) > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(2) > td > table > tbody > tr");
-                for (Element element : elements) {
-                    Elements tds = element.select("td");
-                    for (Element td : tds) {
-                        System.out.println(td.attr("title")+"-----"+url);
-                        news.setTitle(td.attr("title"));
-                        //data=td.attr("title").getBytes();
-                        
-                        System.out.println(td.select("font").text());
-                        //data=td.select("font").text().getBytes();
-
-                        /*String[] ymd=td.select("font").text().split("[(|)|/]");
-                        int year=Integer.parseInt(ymd[0]);
-                        int month=Integer.parseInt(ymd[1]);
-                        int day=Integer.parseInt(ymd[2]);
-                        Calendar calendar=Calendar.getInstance();
-                        calendar.set(year,month-1,day);
-                        news.setDate(calendar.getTime());
-                        newsList.add(news);*/
-                    }
-                }
-            }else if(p3.matcher(url).matches()){
-                Elements elementsInNextPage=doc.select("body > table > tbody > tr:nth-child(2) > td:nth-child(2) > table:nth-child(1) > tbody > tr:nth-child(5) > td > table > tbody > tr > td:nth-child(3) > table > tbody > tr");
-                for(Element element:elementsInNextPage){
-                    Elements as=element.select("td > a");
-                    Elements times=element.select("td.timecss");
-                    for(Element a:as){
-                        System.out.println(a.text()+"-----"+url);
-                        news.setTitle(a.text());
-                    }
-                    for(Element time:times){
-                        System.out.println(time.text());
-                        /*String[] ymd=time.text().split("/");
-                        int year=Integer.parseInt(ymd[0]);
-                        int month=Integer.parseInt(ymd[1]);
-                        int day=Integer.parseInt(ymd[2]);
-                        Calendar calendar=Calendar.getInstance();
-                        calendar.set(year,month-1,day);
-                        news.setDate(calendar.getTime());
-                        newsList.add(news);*/
-                    }
-                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
 
